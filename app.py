@@ -8,13 +8,20 @@ from pypdf import PdfReader, PdfWriter
 
 def setup_page():
     st.set_page_config(
-        page_title="	⚡ Voice Chatbot",
+        page_title="Plusone — Teman Saat Sendirian",
         layout="centered"
     )
     
-    st.header("Chatbot using Gemini 3.5 Flash!" )
+    st.header("👋 Plusone")
+    st.caption("Teman yang selalu ada, saat tidak ada orang lain di dekatmu.")
 
-    st.sidebar.header("Options", divider='rainbow')
+    st.sidebar.header("Pilih Bantuan", divider='rainbow')
+
+    st.sidebar.info(
+        "Plusone membantu menjelaskan, bukan menggantikan dokter, "
+        "keluarga, atau pendamping profesional. Untuk keputusan penting, "
+        "tetap konsultasikan ke orang yang tepat, ya."
+    )
     
     hide_menu_style = """
             <style>
@@ -27,11 +34,11 @@ def setup_page():
 def show_usage(usage_metadata):
     if not usage_metadata:
         return
-    st.sidebar.markdown("**Token usage**")
+    st.sidebar.markdown("**Pemakaian token**")
     st.sidebar.markdown(f"- Prompt: {usage_metadata.prompt_token_count}")
     if usage_metadata.thoughts_token_count:
-        st.sidebar.markdown(f"- Thinking: {usage_metadata.thoughts_token_count}")
-    st.sidebar.markdown(f"- Response: {usage_metadata.candidates_token_count}")
+        st.sidebar.markdown(f"- Berpikir: {usage_metadata.thoughts_token_count}")
+    st.sidebar.markdown(f"- Jawaban: {usage_metadata.candidates_token_count}")
     st.sidebar.markdown(f"- **Total: {usage_metadata.total_token_count}**")
 
 
@@ -59,17 +66,17 @@ def ask_and_respond(chat, history_key, prompt):
 
 
 def get_choice():
-    choice = st.sidebar.radio("Choose:", ["Converse with Gemini 2.0",
-                                          "Chat with a PDF",
-                                          "Chat with many PDFs",
-                                          "Chat with an image",
-                                          "Chat with audio",
-                                          "Chat with video"],)
+    choice = st.sidebar.radio("Pilih:", ["💬 Ngobrol dengan Plusone",
+                                          "📄 Bacakan surat/dokumen",
+                                          "📚 Bacakan beberapa dokumen",
+                                          "🖼️ Lihatkan foto ini",
+                                          "🎙️ Dengarkan pesan suara ini",
+                                          "🎬 Tonton video ini bersamaku"],)
     return choice
 
  
 def get_clear():
-    clear_button=st.sidebar.button("Start new session", key="clear")
+    clear_button=st.sidebar.button("🔄 Mulai obrolan baru", key="clear")
     return clear_button
 
 
@@ -81,8 +88,8 @@ def clear_session_keys(*keys):
 def main():
     choice = get_choice()
     
-    if choice == "Converse with Gemini 2.0":
-        st.subheader("Ask Gemini")
+    if choice == "💬 Ngobrol dengan Plusone":
+        st.subheader("Ngobrol santai")
         clear = get_clear()
         if clear:
             clear_session_keys('history_converse', 'chat_converse')
@@ -94,18 +101,28 @@ def main():
             st.session_state.chat_converse = client.chats.create(
                 model=MODEL_ID,
                 config=types.GenerateContentConfig(
-                    system_instruction="You are a helpful assistant. Your answers need to brief and concise.",
+                    system_instruction=(
+                        "You are Plusone, a warm, patient, and friendly companion for "
+                        "people who are often alone — such as elderly users or people "
+                        "with disabilities. Speak simply, kindly, and unhurriedly, in "
+                        "the same language the user uses. Keep answers short and clear. "
+                        "You are a companion, not a replacement for real human contact, "
+                        "medical professionals, or emergency help — gently encourage the "
+                        "user to reach out to family, caregivers, or professionals when "
+                        "something serious comes up."
+                    ),
                 ),
             )
 
         render_history('history_converse')
 
-        prompt = st.chat_input("Enter your question here")
+        prompt = st.chat_input("Tulis apa saja yang ingin kamu obrolkan...")
         if prompt:
             ask_and_respond(st.session_state.chat_converse, 'history_converse', prompt)
 
-    elif choice == "Chat with a PDF":
-        st.subheader("Chat with your PDF file")
+    elif choice == "📄 Bacakan surat/dokumen":
+        st.subheader("Bacakan surat atau dokumen")
+        st.caption("Unggah surat, resep dokter, tagihan, atau dokumen apa pun — Plusone akan bantu jelaskan isinya dengan bahasa sederhana.")
         clear = get_clear()
         if clear:
             clear_session_keys('history_pdf', 'chat_pdf', 'pdf_file_name')
@@ -113,7 +130,7 @@ def main():
         if 'history_pdf' not in st.session_state:
             st.session_state.history_pdf = []
 
-        uploaded_file = st.file_uploader("Choose your pdf file", type=['pdf'], accept_multiple_files=False)
+        uploaded_file = st.file_uploader("Pilih file PDF", type=['pdf'], accept_multiple_files=False)
 
         if uploaded_file:
             # Only (re)upload and start a fresh chat when a genuinely new file is chosen —
@@ -122,6 +139,16 @@ def main():
                 file_upload = client.files.upload(file=uploaded_file.name)
                 st.session_state.chat_pdf = client.chats.create(
                     model=MODEL_ID,
+                    config=types.GenerateContentConfig(
+                        system_instruction=(
+                            "You are Plusone, a warm and patient companion helping someone "
+                            "understand a document. Explain in simple, plain language, in "
+                            "the same language the user uses. If the document involves "
+                            "medical or legal content, explain what it says without giving "
+                            "a diagnosis or legal ruling, and gently remind the user to "
+                            "confirm important decisions with a doctor, lawyer, or family member."
+                        ),
+                    ),
                     history=[
                         types.Content(
                             role="user",
@@ -138,12 +165,13 @@ def main():
 
             render_history('history_pdf')
 
-            prompt2 = st.chat_input("Enter your question here")
+            prompt2 = st.chat_input("Tanyakan apa saja tentang dokumen ini...")
             if prompt2:
                 ask_and_respond(st.session_state.chat_pdf, 'history_pdf', prompt2)
 
-    elif choice == "Chat with many PDFs":
-        st.subheader("Chat with your PDF file")
+    elif choice == "📚 Bacakan beberapa dokumen":
+        st.subheader("Bacakan beberapa dokumen sekaligus")
+        st.caption("Punya beberapa surat atau dokumen yang berhubungan? Unggah semuanya, Plusone akan bantu bacakan dan bandingkan.")
         clear = get_clear()
         if clear:
             clear_session_keys('history_pdfs', 'chat_pdfs', 'pdfs_file_names')
@@ -151,7 +179,7 @@ def main():
         if 'history_pdfs' not in st.session_state:
             st.session_state.history_pdfs = []
 
-        uploaded_files2 = st.file_uploader("Choose 1 or more files",  type=['pdf'], accept_multiple_files=True)
+        uploaded_files2 = st.file_uploader("Pilih 1 atau lebih file PDF",  type=['pdf'], accept_multiple_files=True)
 
         if uploaded_files2:
             current_names = tuple(f.name for f in uploaded_files2)
@@ -168,6 +196,16 @@ def main():
                 file_upload = client.files.upload(file=fullfile)
                 st.session_state.chat_pdfs = client.chats.create(
                     model=MODEL_ID,
+                    config=types.GenerateContentConfig(
+                        system_instruction=(
+                            "You are Plusone, a warm and patient companion helping someone "
+                            "understand several documents together. Explain in simple, plain "
+                            "language, in the same language the user uses. If the documents "
+                            "involve medical or legal content, explain what they say without "
+                            "giving a diagnosis or legal ruling, and gently remind the user to "
+                            "confirm important decisions with a doctor, lawyer, or family member."
+                        ),
+                    ),
                     history=[
                         types.Content(
                             role="user",
@@ -184,12 +222,13 @@ def main():
 
             render_history('history_pdfs')
 
-            prompt2b = st.chat_input("Enter your question here")
+            prompt2b = st.chat_input("Tanyakan apa saja tentang dokumen-dokumen ini...")
             if prompt2b:
                 ask_and_respond(st.session_state.chat_pdfs, 'history_pdfs', prompt2b)
 
-    elif choice == "Chat with an image":
-        st.subheader("Chat with your image file")
+    elif choice == "🖼️ Lihatkan foto ini":
+        st.subheader("Lihatkan foto ini untukku")
+        st.caption("Foto obat, kondisi kulit, surat, atau apa pun yang ingin kamu tanyakan — Plusone akan bantu jelaskan.")
         clear = get_clear()
         if clear:
             clear_session_keys('history_image', 'chat_image', 'image_file_name')
@@ -197,13 +236,23 @@ def main():
         if 'history_image' not in st.session_state:
             st.session_state.history_image = []
 
-        uploaded_image = st.file_uploader("Choose your PNG or JPEG file",  type=['png','jpg'], accept_multiple_files=False)
+        uploaded_image = st.file_uploader("Pilih file PNG atau JPEG",  type=['png','jpg'], accept_multiple_files=False)
 
         if uploaded_image:
             if st.session_state.get('image_file_name') != uploaded_image.name:
                 file_upload = client.files.upload(file=uploaded_image.name)
                 st.session_state.chat_image = client.chats.create(
                     model=MODEL_ID,
+                    config=types.GenerateContentConfig(
+                        system_instruction=(
+                            "You are Plusone, a warm and patient companion helping someone "
+                            "understand what is in a photo. Describe and explain in simple, "
+                            "plain language, in the same language the user uses. If the photo "
+                            "shows something medical (medication, skin condition, injury), "
+                            "explain what you see without giving a diagnosis, and gently "
+                            "remind the user to confirm with a doctor or caregiver."
+                        ),
+                    ),
                     history=[
                         types.Content(
                             role="user",
@@ -220,12 +269,13 @@ def main():
 
             render_history('history_image')
 
-            prompt3 = st.chat_input("Enter your question here")
+            prompt3 = st.chat_input("Tanyakan apa saja tentang foto ini...")
             if prompt3:
                 ask_and_respond(st.session_state.chat_image, 'history_image', prompt3)
 
-    elif choice == "Chat with audio":
-        st.subheader("Chat with your audio file")
+    elif choice == "🎙️ Dengarkan pesan suara ini":
+        st.subheader("Dengarkan pesan suara ini untukku")
+        st.caption("Rekaman pesan keluarga, dokter, atau catatan suaramu sendiri — Plusone akan bantu dengarkan dan jelaskan.")
         clear = get_clear()
         if clear:
             clear_session_keys('history_audio', 'chat_audio', 'audio_file_name')
@@ -233,13 +283,21 @@ def main():
         if 'history_audio' not in st.session_state:
             st.session_state.history_audio = []
 
-        uploaded_audio = st.file_uploader("Choose your mp3 or wav file",  type=['mp3','wav'], accept_multiple_files=False)
+        uploaded_audio = st.file_uploader("Pilih file MP3 atau WAV",  type=['mp3','wav'], accept_multiple_files=False)
 
         if uploaded_audio:
             if st.session_state.get('audio_file_name') != uploaded_audio.name:
                 file_upload = client.files.upload(file=uploaded_audio.name)
                 st.session_state.chat_audio = client.chats.create(
                     model=MODEL_ID,
+                    config=types.GenerateContentConfig(
+                        system_instruction=(
+                            "You are Plusone, a warm and patient companion helping someone "
+                            "understand an audio recording — such as a voice message from "
+                            "family, a doctor, or their own notes. Summarize and explain in "
+                            "simple, plain language, in the same language the user uses."
+                        ),
+                    ),
                     history=[
                         types.Content(
                             role="user",
@@ -256,12 +314,13 @@ def main():
 
             render_history('history_audio')
 
-            prompt5 = st.chat_input("Enter your question here")
+            prompt5 = st.chat_input("Tanyakan apa saja tentang pesan suara ini...")
             if prompt5:
                 ask_and_respond(st.session_state.chat_audio, 'history_audio', prompt5)
 
-    elif choice == "Chat with video":
-        st.subheader("Chat with your video file")
+    elif choice == "🎬 Tonton video ini bersamaku":
+        st.subheader("Tonton video ini bersamaku")
+        st.caption("Video call rekaman keluarga, instruksi terapi, atau video apa pun — Plusone akan bantu jelaskan.")
         clear = get_clear()
         if clear:
             clear_session_keys('history_video', 'chat_video', 'video_file_name')
@@ -269,7 +328,7 @@ def main():
         if 'history_video' not in st.session_state:
             st.session_state.history_video = []
 
-        uploaded_video = st.file_uploader("Choose your mp4 or mov file",  type=['mp4','mov'], accept_multiple_files=False)
+        uploaded_video = st.file_uploader("Pilih file MP4 atau MOV",  type=['mp4','mov'], accept_multiple_files=False)
 
         if uploaded_video:
             if st.session_state.get('video_file_name') != uploaded_video.name:
@@ -283,6 +342,15 @@ def main():
 
                 st.session_state.chat_video = client.chats.create(
                     model=MODEL_ID,
+                    config=types.GenerateContentConfig(
+                        system_instruction=(
+                            "You are Plusone, a warm and patient companion helping someone "
+                            "understand a video — such as a family video call recording or "
+                            "an instructional video (e.g. how to use a medical device). "
+                            "Summarize and explain in simple, plain language, step by step "
+                            "if relevant, in the same language the user uses."
+                        ),
+                    ),
                     history=[
                         types.Content(
                             role="user",
@@ -299,7 +367,7 @@ def main():
 
             render_history('history_video')
 
-            prompt4 = st.chat_input("Enter your question here")
+            prompt4 = st.chat_input("Tanyakan apa saja tentang video ini...")
             if prompt4:
                 ask_and_respond(st.session_state.chat_video, 'history_video', prompt4)
 

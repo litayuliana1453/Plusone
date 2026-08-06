@@ -291,6 +291,15 @@ def main():
 if __name__ == '__main__':
     setup_page()
     api_key = os.environ.get('GOOGLE_API_KEY_NEW')
+
+    if not api_key:
+        st.error(
+            "GOOGLE_API_KEY_NEW belum diset. "
+            "Buka Manage app → Settings → Secrets di Streamlit Cloud, lalu tambahkan:\n\n"
+            'GOOGLE_API_KEY_NEW = "your-api-key-here"'
+        )
+        st.stop()
+
     client = genai.Client(api_key=api_key)
     MODEL_ID = "gemini-2.0-flash-001"
     main()

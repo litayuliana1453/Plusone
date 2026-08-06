@@ -24,6 +24,17 @@ def setup_page():
     st.markdown(hide_menu_style, unsafe_allow_html=True)
 
     
+def show_usage(usage_metadata):
+    if not usage_metadata:
+        return
+    st.sidebar.markdown("**Token usage**")
+    st.sidebar.markdown(f"- Prompt: {usage_metadata.prompt_token_count}")
+    if usage_metadata.thoughts_token_count:
+        st.sidebar.markdown(f"- Thinking: {usage_metadata.thoughts_token_count}")
+    st.sidebar.markdown(f"- Response: {usage_metadata.candidates_token_count}")
+    st.sidebar.markdown(f"- **Total: {usage_metadata.total_token_count}**")
+
+
 def get_choice():
     choice = st.sidebar.radio("Choose:", ["Converse with Gemini 2.0",
                                           "Chat with a PDF",
@@ -65,7 +76,8 @@ def main():
             ):
                 response = chat.send_message(st.session_state.message)
                 st.markdown(response.text) 
-                st.sidebar.markdown(response.usage_metadata)
+                st.sidebar.markdown("---")
+                show_usage(response.usage_metadata)
             st.session_state.message += response.text
 
     elif choice == "Chat with a PDF":
@@ -106,7 +118,8 @@ def main():
                 ):
                     response2 = chat2.send_message(st.session_state.message)
                     st.markdown(response2.text)
-                    st.sidebar.markdown(response2.usage_metadata)
+                    st.sidebar.markdown("---")
+                    show_usage(response2.usage_metadata)
                 st.session_state.message += response2.text
                     
     elif choice == "Chat with many PDFs":
@@ -156,7 +169,8 @@ def main():
                 ):
                     response2b = chat2b.send_message(st.session_state.message)
                     st.markdown(response2b.text)
-                    st.sidebar.markdown(response2b.usage_metadata)
+                    st.sidebar.markdown("---")
+                    show_usage(response2b.usage_metadata)
                 st.session_state.message += response2b.text
             
     elif choice == "Chat with an image":

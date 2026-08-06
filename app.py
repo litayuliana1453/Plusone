@@ -3,7 +3,7 @@
 import streamlit as st, os, time
 from google import genai
 from google.genai import types
-from pypdf import PdfReader, PdfWriter, PdfMerger
+from pypdf import PdfReader, PdfWriter
 
 
 def setup_page():
@@ -126,13 +126,14 @@ def main():
             uploaded_files2 = st.file_uploader("Choose 1 or more files",  type=['pdf'], accept_multiple_files=True)
                
             if uploaded_files2:
-                merger = PdfMerger()
-                for file in uploaded_files2:
-                        merger.append(file)
-    
-                fullfile = "merged_all_files.pdf"
-                merger.write(fullfile)
-                merger.close()
+                writer = PdfWriter()
+for file in uploaded_files2:
+        writer.append(file)
+
+fullfile = "merged_all_files.pdf"
+with open(fullfile, "wb") as f:
+    writer.write(f)
+writer.close()
 
                 file_upload = client.files.upload(file=fullfile) 
                 chat2b = client.chats.create(model=MODEL_ID,

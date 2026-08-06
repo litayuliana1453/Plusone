@@ -12,7 +12,7 @@ def setup_page():
         layout="centered"
     )
     
-    st.header("Chatbot using Gemini 2.0 Flash!" )
+    st.header("Chatbot using Gemini 3.0 Flash!" )
 
     st.sidebar.header("Options", divider='rainbow')
     

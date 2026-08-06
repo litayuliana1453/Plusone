@@ -301,5 +301,5 @@ if __name__ == '__main__':
         st.stop()
 
     client = genai.Client(api_key=api_key)
-    MODEL_ID = "gemini-2.0-flash-001"
+    MODEL_ID = "gemini-3.5-flash"
     main()

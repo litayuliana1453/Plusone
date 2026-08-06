@@ -84,6 +84,15 @@ def clear_session_keys(*keys):
     for key in keys:
         st.session_state.pop(key, None)
 
+
+def save_uploaded_file(uploaded_file):
+    """Streamlit's uploaded file only lives in memory — write it to disk first
+    so client.files.upload() (which needs a real file path) can find it."""
+    path = uploaded_file.name
+    with open(path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+    return path
+
      
 def main():
     choice = get_choice()
@@ -136,7 +145,8 @@ def main():
             # Only (re)upload and start a fresh chat when a genuinely new file is chosen —
             # not on every rerun, which was wiping the conversation on each question.
             if st.session_state.get('pdf_file_name') != uploaded_file.name:
-                file_upload = client.files.upload(file=uploaded_file.name)
+                saved_path = save_uploaded_file(uploaded_file)
+                file_upload = client.files.upload(file=saved_path)
                 st.session_state.chat_pdf = client.chats.create(
                     model=MODEL_ID,
                     config=types.GenerateContentConfig(
@@ -240,7 +250,8 @@ def main():
 
         if uploaded_image:
             if st.session_state.get('image_file_name') != uploaded_image.name:
-                file_upload = client.files.upload(file=uploaded_image.name)
+                saved_path = save_uploaded_file(uploaded_image)
+                file_upload = client.files.upload(file=saved_path)
                 st.session_state.chat_image = client.chats.create(
                     model=MODEL_ID,
                     config=types.GenerateContentConfig(
@@ -287,7 +298,8 @@ def main():
 
         if uploaded_audio:
             if st.session_state.get('audio_file_name') != uploaded_audio.name:
-                file_upload = client.files.upload(file=uploaded_audio.name)
+                saved_path = save_uploaded_file(uploaded_audio)
+                file_upload = client.files.upload(file=saved_path)
                 st.session_state.chat_audio = client.chats.create(
                     model=MODEL_ID,
                     config=types.GenerateContentConfig(
@@ -332,7 +344,8 @@ def main():
 
         if uploaded_video:
             if st.session_state.get('video_file_name') != uploaded_video.name:
-                video_file = client.files.upload(file=uploaded_video.name)
+                saved_path = save_uploaded_file(uploaded_video)
+                video_file = client.files.upload(file=saved_path)
                 while video_file.state == "PROCESSING":
                     time.sleep(10)
                     video_file = client.files.get(name=video_file.name)

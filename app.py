@@ -51,23 +51,22 @@ def main():
     
         if 'message' not in st.session_state:
             st.session_state.message = " "
-        
-        if clear not in st.session_state:
-            chat = client.chats.create(model=MODEL_ID, config=types.GenerateContentConfig(
-                system_instruction="You are a helpful assistant. Your answers need to brief and concise.",))
-            prompt = st.chat_input("Enter your question here")
-            if prompt:
-                with st.chat_message("user"):
-                    st.write(prompt)
-        
-                st.session_state.message += prompt
-                with st.chat_message(
-                    "model", avatar="🧞‍♀️",
-                ):
-                    response = chat.send_message(st.session_state.message)
-                    st.markdown(response.text) 
-                    st.sidebar.markdown(response.usage_metadata)
-                st.session_state.message += response.text
+
+        chat = client.chats.create(model=MODEL_ID, config=types.GenerateContentConfig(
+            system_instruction="You are a helpful assistant. Your answers need to brief and concise.",))
+        prompt = st.chat_input("Enter your question here")
+        if prompt:
+            with st.chat_message("user"):
+                st.write(prompt)
+
+            st.session_state.message += prompt
+            with st.chat_message(
+                "model", avatar="🧞‍♀️",
+            ):
+                response = chat.send_message(st.session_state.message)
+                st.markdown(response.text) 
+                st.sidebar.markdown(response.usage_metadata)
+            st.session_state.message += response.text
 
     elif choice == "Chat with a PDF":
         st.subheader("Chat with your PDF file")
@@ -78,38 +77,37 @@ def main():
     
         if 'message' not in st.session_state:
             st.session_state.message = " "
+
+        uploaded_files = st.file_uploader("Choose your pdf file", type=['pdf'], accept_multiple_files=False)
+        if uploaded_files:
+            file_name=uploaded_files.name
+            file_upload = client.files.upload(file=file_name)
+            chat2 = client.chats.create(model=MODEL_ID,
+                history=[
+                    types.Content(
+                        role="user",
+                        parts=[
+
+                                types.Part.from_uri(
+                                    file_uri=file_upload.uri,
+                                    mime_type=file_upload.mime_type),
+                                ]
+                        ),
+                    ]
+                    )
+            prompt2 = st.chat_input("Enter your question here")
+            if prompt2:
+                with st.chat_message("user"):
+                    st.write(prompt2)
         
-        if clear not in st.session_state:
-            uploaded_files = st.file_uploader("Choose your pdf file", type=['pdf'], accept_multiple_files=False)
-            if uploaded_files:
-                file_name=uploaded_files.name
-                file_upload = client.files.upload(file=file_name)
-                chat2 = client.chats.create(model=MODEL_ID,
-                    history=[
-                        types.Content(
-                            role="user",
-                            parts=[
-    
-                                    types.Part.from_uri(
-                                        file_uri=file_upload.uri,
-                                        mime_type=file_upload.mime_type),
-                                    ]
-                            ),
-                        ]
-                        )
-                prompt2 = st.chat_input("Enter your question here")
-                if prompt2:
-                    with st.chat_message("user"):
-                        st.write(prompt2)
-            
-                    st.session_state.message += prompt2
-                    with st.chat_message(
-                        "model", avatar="🧞‍♀️",
-                    ):
-                        response2 = chat2.send_message(st.session_state.message)
-                        st.markdown(response2.text)
-                        st.sidebar.markdown(response2.usage_metadata)
-                    st.session_state.message += response2.text
+                st.session_state.message += prompt2
+                with st.chat_message(
+                    "model", avatar="🧞‍♀️",
+                ):
+                    response2 = chat2.send_message(st.session_state.message)
+                    st.markdown(response2.text)
+                    st.sidebar.markdown(response2.usage_metadata)
+                st.session_state.message += response2.text
                     
     elif choice == "Chat with many PDFs":
         st.subheader("Chat with your PDF file")
@@ -120,48 +118,46 @@ def main():
     
         if 'message' not in st.session_state:
             st.session_state.message = " "
-        
-        if clear not in st.session_state:
-        
-            uploaded_files2 = st.file_uploader("Choose 1 or more files",  type=['pdf'], accept_multiple_files=True)
-               
-            if uploaded_files2:
-                writer = PdfWriter()
-for file in uploaded_files2:
-        writer.append(file)
 
-fullfile = "merged_all_files.pdf"
-with open(fullfile, "wb") as f:
-    writer.write(f)
-writer.close()
+        uploaded_files2 = st.file_uploader("Choose 1 or more files",  type=['pdf'], accept_multiple_files=True)
+           
+        if uploaded_files2:
+            writer = PdfWriter()
+            for file in uploaded_files2:
+                writer.append(file)
 
-                file_upload = client.files.upload(file=fullfile) 
-                chat2b = client.chats.create(model=MODEL_ID,
-                    history=[
-                        types.Content(
-                            role="user",
-                            parts=[
-    
-                                    types.Part.from_uri(
-                                        file_uri=file_upload.uri,
-                                        mime_type=file_upload.mime_type),
-                                    ]
-                            ),
-                        ]
-                        )
-                prompt2b = st.chat_input("Enter your question here")
-                if prompt2b:
-                    with st.chat_message("user"):
-                        st.write(prompt2b)
-            
-                    st.session_state.message += prompt2b
-                    with st.chat_message(
-                        "model", avatar="🧞‍♀️",
-                    ):
-                        response2b = chat2b.send_message(st.session_state.message)
-                        st.markdown(response2b.text)
-                        st.sidebar.markdown(response2b.usage_metadata)
-                    st.session_state.message += response2b.text
+            fullfile = "merged_all_files.pdf"
+            with open(fullfile, "wb") as f:
+                writer.write(f)
+            writer.close()
+
+            file_upload = client.files.upload(file=fullfile)
+            chat2b = client.chats.create(model=MODEL_ID,
+                history=[
+                    types.Content(
+                        role="user",
+                        parts=[
+
+                                types.Part.from_uri(
+                                    file_uri=file_upload.uri,
+                                    mime_type=file_upload.mime_type),
+                                ]
+                        ),
+                    ]
+                    )
+            prompt2b = st.chat_input("Enter your question here")
+            if prompt2b:
+                with st.chat_message("user"):
+                    st.write(prompt2b)
+        
+                st.session_state.message += prompt2b
+                with st.chat_message(
+                    "model", avatar="🧞‍♀️",
+                ):
+                    response2b = chat2b.send_message(st.session_state.message)
+                    st.markdown(response2b.text)
+                    st.sidebar.markdown(response2b.usage_metadata)
+                st.session_state.message += response2b.text
             
     elif choice == "Chat with an image":
         st.subheader("Chat with your PDF file")
@@ -172,37 +168,36 @@ writer.close()
     
         if 'message' not in st.session_state:
             st.session_state.message = " "
+
+        uploaded_files2 = st.file_uploader("Choose your PNG or JPEG file",  type=['png','jpg'], accept_multiple_files=False)
+        if uploaded_files2:
+            file_name2=uploaded_files2.name
+            file_upload = client.files.upload(file=file_name2)
+            chat3 = client.chats.create(model=MODEL_ID,
+                history=[
+                    types.Content(
+                        role="user",
+                        parts=[
+
+                                types.Part.from_uri(
+                                    file_uri=file_upload.uri,
+                                    mime_type=file_upload.mime_type),
+                                ]
+                        ),
+                    ]
+                    )
+            prompt3 = st.chat_input("Enter your question here")
+            if prompt3:
+                with st.chat_message("user"):
+                    st.write(prompt3)
         
-        if clear not in st.session_state:
-            uploaded_files2 = st.file_uploader("Choose your PNG or JPEG file",  type=['png','jpg'], accept_multiple_files=False)
-            if uploaded_files2:
-                file_name2=uploaded_files2.name
-                file_upload = client.files.upload(file=file_name2)
-                chat3 = client.chats.create(model=MODEL_ID,
-                    history=[
-                        types.Content(
-                            role="user",
-                            parts=[
-    
-                                    types.Part.from_uri(
-                                        file_uri=file_upload.uri,
-                                        mime_type=file_upload.mime_type),
-                                    ]
-                            ),
-                        ]
-                        )
-                prompt3 = st.chat_input("Enter your question here")
-                if prompt3:
-                    with st.chat_message("user"):
-                        st.write(prompt3)
-            
-                    st.session_state.message += prompt3
-                    with st.chat_message(
-                        "model", avatar="🧞‍♀️",
-                    ):
-                        response3 = chat3.send_message(st.session_state.message)
-                        st.markdown(response3.text)
-                    st.session_state.message += response3.text
+                st.session_state.message += prompt3
+                with st.chat_message(
+                    "model", avatar="🧞‍♀️",
+                ):
+                    response3 = chat3.send_message(st.session_state.message)
+                    st.markdown(response3.text)
+                st.session_state.message += response3.text
                 
     elif choice == "Chat with audio":
         st.subheader("Chat with your audio file")
@@ -213,37 +208,36 @@ writer.close()
     
         if 'message' not in st.session_state:
             st.session_state.message = " "
+
+        uploaded_files3 = st.file_uploader("Choose your mp3 or wav file",  type=['mp3','wav'], accept_multiple_files=False)
+        if uploaded_files3:
+            file_name3=uploaded_files3.name
+            file_upload = client.files.upload(file=file_name3)
+            chat4 = client.chats.create(model=MODEL_ID,
+                history=[
+                    types.Content(
+                        role="user",
+                        parts=[
+
+                                types.Part.from_uri(
+                                    file_uri=file_upload.uri,
+                                    mime_type=file_upload.mime_type),
+                                ]
+                        ),
+                    ]
+                    )
+            prompt5 = st.chat_input("Enter your question here")
+            if prompt5:
+                with st.chat_message("user"):
+                    st.write(prompt5)
         
-        if clear not in st.session_state:
-            uploaded_files3 = st.file_uploader("Choose your mp3 or wav file",  type=['mp3','wav'], accept_multiple_files=False)
-            if uploaded_files3:
-                file_name3=uploaded_files3.name
-                file_upload = client.files.upload(file=file_name3)
-                chat4 = client.chats.create(model=MODEL_ID,
-                    history=[
-                        types.Content(
-                            role="user",
-                            parts=[
-    
-                                    types.Part.from_uri(
-                                        file_uri=file_upload.uri,
-                                        mime_type=file_upload.mime_type),
-                                    ]
-                            ),
-                        ]
-                        )
-                prompt5 = st.chat_input("Enter your question here")
-                if prompt5:
-                    with st.chat_message("user"):
-                        st.write(prompt5)
-            
-                    st.session_state.message += prompt5
-                    with st.chat_message(
-                        "model", avatar="🧞‍♀️",
-                    ):
-                        response4 = chat4.send_message(st.session_state.message)
-                        st.markdown(response4.text)
-                    st.session_state.message += response4.text
+                st.session_state.message += prompt5
+                with st.chat_message(
+                    "model", avatar="🧞‍♀️",
+                ):
+                    response4 = chat4.send_message(st.session_state.message)
+                    st.markdown(response4.text)
+                st.session_state.message += response4.text
 
     elif choice == "Chat with video":
         st.subheader("Chat with your video file")
@@ -254,45 +248,44 @@ writer.close()
     
         if 'message' not in st.session_state:
             st.session_state.message = " "
+
+        uploaded_files4 = st.file_uploader("Choose your mp4 or mov file",  type=['mp4','mov'], accept_multiple_files=False)
         
-        if clear not in st.session_state:
-            uploaded_files4 = st.file_uploader("Choose your mp4 or mov file",  type=['mp4','mov'], accept_multiple_files=False)
+        if uploaded_files4:
+            file_name4=uploaded_files4.name
+            video_file = client.files.upload(file=file_name4)
+            while video_file.state == "PROCESSING":
+                time.sleep(10)
+                video_file = client.files.get(name=video_file.name)
             
-            if uploaded_files4:
-                file_name4=uploaded_files4.name
-                video_file = client.files.upload(file=file_name4)
-                while video_file.state == "PROCESSING":
-                    time.sleep(10)
-                    video_file = client.files.get(name=video_file.name)
-                
-                if video_file.state == "FAILED":
-                  raise ValueError(video_file.state)
-                
-                chat5 = client.chats.create(model=MODEL_ID,
-                    history=[
-                        types.Content(
-                            role="user",
-                            parts=[
-    
-                                    types.Part.from_uri(
-                                        file_uri=video_file.uri,
-                                        mime_type=video_file.mime_type),
-                                    ]
-                            ),
-                        ]
-                        )
-                prompt4 = st.chat_input("Enter your question here")
-                if prompt4:
-                    with st.chat_message("user"):
-                        st.write(prompt4)
+            if video_file.state == "FAILED":
+              raise ValueError(video_file.state)
             
-                    st.session_state.message += prompt4
-                    with st.chat_message(
-                        "model", avatar="🧞‍♀️",
-                    ):
-                        response5 = chat5.send_message(st.session_state.message)
-                        st.markdown(response5.text)
-                    st.session_state.message += response5.text
+            chat5 = client.chats.create(model=MODEL_ID,
+                history=[
+                    types.Content(
+                        role="user",
+                        parts=[
+
+                                types.Part.from_uri(
+                                    file_uri=video_file.uri,
+                                    mime_type=video_file.mime_type),
+                                ]
+                        ),
+                    ]
+                    )
+            prompt4 = st.chat_input("Enter your question here")
+            if prompt4:
+                with st.chat_message("user"):
+                    st.write(prompt4)
+        
+                st.session_state.message += prompt4
+                with st.chat_message(
+                    "model", avatar="🧞‍♀️",
+                ):
+                    response5 = chat5.send_message(st.session_state.message)
+                    st.markdown(response5.text)
+                st.session_state.message += response5.text
                     
                 
 if __name__ == '__main__':
